@@ -123,9 +123,10 @@ alias his="fc -l -f 0 | sort -r | peco"
 # % brew install anyenv
 #------------------------------------------------------------------------------
 export PATH="$HOME/.anyenv/bin:$PATH"
+eval "$(anyenv init - zsh)"
 for D in `ls $HOME/.anyenv/envs`
 do
-  export PATH="$HOME/.anyenv/envs/$D/bin/:$PATH"
+  export PATH="$HOME/.anyenv/envs/$D/bin:$PATH"
 done
 
 # ------------------------------------------------------------------------
