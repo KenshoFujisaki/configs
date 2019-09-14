@@ -1,0 +1,419 @@
+"Updated: 2015/08/17 01:26:00
+"Firefox: 40.0.2
+"OS:      MacOSX 10.10 Yosemite
+
+"==============================================================================
+" 基本操作
+"==============================================================================
+"j,kによる上下スクロール
+nnoremap j 10<C-e>
+nnoremap k 10<C-y>
+"h,lによる前後ページ読み込み
+nnoremap h <A-Left>
+nnoremap l <A-Right>
+"H,Lによる左右スクロール
+nnoremap H 5h
+nnoremap L 5l
+"タブ移動
+nnoremap <Right> gt
+nnoremap <Left> gT
+"現在のタブの位置変更
+nnoremap <S-Right> :tabmove! +1<CR>
+nnoremap <S-Left> :tabmove! -1<CR>
+
+"==============================================================================
+" GUI設定
+"==============================================================================
+"navigation非表示
+set toolbars=nonavigation
+"自動フォーカス禁止
+set focuscontent
+
+"==============================================================================
+" 各種マッピング
+"==============================================================================
+"Ctrl+rでvimperatorrcのリロード
+map <C-r> :source<Space>~/_vimperatorrc<Return>
+"Ctrl+tでtabgroups switchができるように
+map <C-t> :tabgroups<Space>switch<Space>
+" yy でエンコードしたURLとタイトルをクリップボードへ
+nnoremap yy :javascript msg=[buffer.title,buffer.URL].join(' - ');liberator.echomsg("Copied text to clipboard:"+msg);util.copyToClipboard(msg);<CR>
+
+"==============================================================================
+" プラグイン管理(vimppm like NeoBundle)
+" ref: cd01/vimppm - https://github.com/cd01/vimppm
+" [!]: 要Git．GitHubでユーザー認証を求められる場合は -> http://qiita.com/t-sagiri/items/79535fc5a8f0c89409f7
+"==============================================================================
+source ~/.vimperator/vimppm/plugin/vimppm.js
+
+" migemo検索(要_libly.js, XUL/Migmemo)
+vimppm '_libly.js'
+vimppm 'migemized_find.js'
+
+"==============================================================================
+" :open :tabopenのときの補完
+"==============================================================================
+":[tab]open時の補完設定(s=検索エンジン+キーワードURL,S=サジェストエンジン,l=ロケーションバーの補完機能を利用,b=ブックマーク)
+set complete=bl
+"標準の検索エンジンをGoogle日本語検索に
+set defsearch=google
+"vimperatorのコマンドライン時はimeをOFFにする
+style! -name=commandline-ime chrome://* #liberator-commandline-command input {ime-mode: inactive;}
+"http://d.hatena.ne.jp/blooo/20100416/1271419000 より
+"Google検索はs
+nnoremap s :set<Space>cpt=s<CR>:tabopen<Space>google<Space>
+"その他の検索エンジンでの検索はS
+nnoremap S :set<Space>cpt=s<CR>:tabopen<Space>
+"それ以外の用途でtabopenする場合
+nnoremap t :set<Space>cpt=thlS<CR>:tabopen<Space>
+"ついでにopenも
+nnoremap o :set<Space>cpt=thlS<CR>:open<Space>
+
+"==============================================================================
+" はてなブックマーク
+"==============================================================================
+javascript <<EOF
+liberator.globalVariables.hBookmark_shortcuts = {
+    hintsAdd     : '<C-c>',
+    hintsComment : '<C-C>',
+    add          : ['<C-c>'],
+    comment      : ['<C-C>'],
+};
+EOF
+"bをはてブ検索、Bを新しいタブではてブ検索
+map b :hb<Space>
+map B :hbtab<Space>
+"はてブアドオンをつかってはてブに追加
+javascript if (typeof hBookmark != 'undefined') liberator.loadScript('chrome://hatenabookmark/content/vimperator/plugin/hatenabookmark.js', {__proto__: this});
+
+"==============================================================================
+" twittperator
+"==============================================================================
+" twittperator.js
+nmap ,tt :<C-u>tw<Space>
+nmap ,tf :<C-u>tw!<CR>
+nmap ,tu :<C-u>tw!@<CR>
+nmap ,tw :<C-u>twuri<CR><Right>
+js <<EOM
+commands.addUserCommand(
+    ["twuri"],
+    "Twittperator tweet with URI",
+    function(){
+        let uri = 'https://www.googleapis.com/urlshortener/v1/url';
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", uri, false);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.send(JSON.stringify({ longUrl: buffer.URI }));
+        let result = JSON.parse(xhr.responseText).id;
+        commandline.open(":",["tw ","/",buffer.title,result].join(" "),modes.EX);
+    }
+);
+EOM
+
+"==============================================================================
+" 全タブの文字列検索
+"==============================================================================
+js <<EOM
+let searchAllTabsSub = {
+  templateTitle: function (item, text) {
+    var simpleURL = item.url.replace(/^https?:\/\//, '');
+    if (simpleURL.indexOf('/') == simpleURL.length-1)
+      simpleURL = simpleURL.replace('/', '');
+    return xml`<span class="td-strut"/>${
+        item.index + ":" + (item.matchCount+1) + ": " + 
+        (item.title=="" ? "未データ取得" : item.title)
+      }<span></span>
+      <a highlight="simpleURL">
+        <span class="extra-info">${simpleURL}</span>
+      </a>`;
+  },  
+  templateDescription: function (item, text) {
+    if (!item.summary) {
+      return;
+    }
+    return !(item.summary && item.summary.length) ? 
+      "" :
+      xml`<span highlight="InfoMsg">${item.summary.slice(0, item.offset)}</span>
+        <span highlight="Filter">${item.filter}</span>
+        <span highlight="InfoMsg">${item.summary.slice(
+          item.offset + item.filter.length, 
+          item.summary.length)
+        }</span>`;
+  },
+  unescapeHTML: function(str) {
+    let entity = {
+      "&amp;":  "&",
+      "&nbsp;":  " ",
+      "&lt;":    "<",
+      "&gt;":    ">",
+      "&quot;":  '"',
+      "&#39;":  "'",
+      "&#13;":  "\r",
+      "&#10;":  "\n"
+    };
+    return str.replace(/\&.{1,4}\;/g,
+      function(e) {
+        return entity[e] ? entity[e] : e;
+      }
+    );
+  }
+}
+
+/* ブラウザの全タブについて内容検索 */
+commands.addUserCommand(
+  ["SearchAllTabContent"],
+  "Search about content of all tabs",
+  function(args){
+    let searchWord, tabIndex, matchCount, url;
+    try {
+      let text = (args+"").match(/^([^\:]*)\:([^\:]*)\:(\d+)\:(\d+)\:(.*$)/);
+      searchWords = text[1].split(" ");
+      searchWord = text[2];
+      tabIndex = ~~text[3];
+      matchCount = text[4];
+      url = text[5];
+    } finally {
+      gBrowser.selectedTab = gBrowser.tabContainer.childNodes[tabIndex];
+      let highlightAndFind = function() {
+        finder.clear();
+        finder._lastSearchString = searchWord;
+        finder.find(searchWord);
+        finder.highlight(searchWord);
+      }
+      if(gBrowser.browsers[tabIndex].contentDocument.body.innerHTML == "") {
+      let preBody = "";
+      let intervalCount = 0;
+      let interval = window.setInterval(function() {
+        let body = "";
+        try {
+          body = gBrowser.browsers[tabIndex].contentDocument.body.innerHTML;
+        } finally {
+          if(body!="" && body==preBody || intervalCount++ > 30/*second*/) {
+            clearInterval(interval);
+            highlightAndFind();
+          }
+          preBody = body;
+        }
+      }, 1000);
+      } else {
+        highlightAndFind();
+      }
+    }
+  }, {
+    completer: function(context, args) {
+      context.title = ["Title", "Matching"];
+      context.keys = {
+        text: "commandline", 
+        description: "summary", 
+        title: "title", 
+        index: "index", 
+        url: "url", 
+        summary: "summary",
+        filter: "filter",
+        offset: "offset",
+        matchCount: "matchCount",
+        commandline: "commandline"
+      };
+      context.process = [
+        searchAllTabsSub.templateTitle,
+        searchAllTabsSub.templateDescription
+      ];
+      context.compare = CompletionContext.Sort.number;
+      context.regenerate = true;
+      context.anchored = true;
+      context.ignoreCase = true;
+      context.filterFunc = null;
+      context.generate = function () {
+        const summaryLenMax = 200;
+        const prefixLen = 50;
+        const matchCountMax = 100;
+        let completions = [];
+        let filters = context.filters = args.map(function(e){
+          return e.replace(
+            /\*|\.|\(|\)|\\|\+|\?|\{|\}|\[|\]|\^|\$|\-|\||\//g,
+            function(e){ return '\\' + e });
+        });
+        let title, url, innerHtmlMsg;
+        title = url = innerHtmlMsg = "";
+
+        //補完リストの生成
+        let makeCompletions = function(searchTarget, index) {
+          let startIndex = 0;
+          let matchCount = 0;
+          let regex = RegExp(filters.join("|"), "ig");
+          let matchedList = []; 
+          searchTarget.replace(regex, function(e) {
+            matchedList.push(e);
+          });  
+          while(matchCount < matchCountMax && matchCount < matchedList.length) {
+            let filter = matchedList[matchCount];
+            let offset = searchTarget.indexOf(filter, startIndex);
+            startIndex = offset + filter.length;
+            if (offset == -1) break;
+            let summary = searchTarget.slice(
+                offset > prefixLen ?  offset - prefixLen : 0,
+                offset + summaryLenMax);
+            let commandline = 
+              filters[filters.length-1] + ":" 
+              + filter + ":" 
+              + index + ":" 
+              + (matchCount+1) + ":" 
+              + url;
+            completions.unshift(
+              { index: index,
+                matchCount: matchCount,
+                title: title,
+                url: url,
+                summary: summary,
+                filter: filter,
+                offset:  offset > prefixLen ? prefixLen : offset,
+                commandline: commandline
+              }
+            );
+            if (filter == "") break;
+            if (url.match("google.co.jp")) break;
+            matchCount += 1;
+          }
+        };
+
+        //各タブにおけるデータ取得
+        for(let i=0; i<gBrowser.tabs.length; i++) {
+          try {
+            title = tabs.getTab(i).label;
+            let targetWindow = gBrowser.browsers[i].contentDocument;
+            url = targetWindow.location.href;
+            innerHtmlMsg = targetWindow.body.innerHTML
+              .replace(/\<[^\>]*?\>/g, "").replace(/(\ |\n|\r)/g, "");
+            innerHtmlMsg = searchAllTabsSub.unescapeHTML(innerHtmlMsg);
+          } finally {
+            let searchTarget = title + innerHtmlMsg + url;
+            if (searchTarget == "") continue;
+
+            //各単語について検索
+            let isMatched = filters.map(function(filter) {
+              let regex = new RegExp(filter, "i");
+              return searchTarget.match(regex) ? true : false;
+            }).reduce(function(s,e) {
+              return s && e;
+            });
+            if (isMatched) {
+                makeCompletions(searchTarget, i);
+            }
+          }
+        }
+        return completions;
+      }
+    }
+  }
+);
+EOM
+nnoremap O :SearchAllTabContent<Space>
+
+"======================================================
+"mysql検索
+"======================================================
+js <<EOM
+/* sqliteの内容ついて検索 */
+commands.addUserCommand(
+    ["SearchMysqlTest"],
+    "Search about mysql",
+    function(args){
+    }, {
+      completer: function(context, args) {
+        context.title = ["Title", "Matching"];
+        context.compare = CompletionContext.Sort.number;
+        context.regenerate = true;
+        context.anchored = true;
+        context.ignoreCase = true;
+        context.filterFunc = null;
+        context.generate = function () {
+          // create an nsIFile for the executable
+          var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsIFile);
+          file.initWithPath("/usr/local/bin/mysql");
+
+          // create an nsIProcess
+          var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
+          process.init(file);
+
+          // Run the process.
+          // If first param is true, calling thread will be blocked until
+          // called process terminates.
+          // Second and third params are used to pass command-line arguments
+          // to the process.
+          var args = ["--help"];
+          process.run(false, args, args.length);
+          let hoge = liberator.execute('!/usr/local/bin/mysql -uhatena -phatena -Dhatena_bookmark -e "select title from url limit 22;" --default-character-set=utf8 -A -s');
+        }
+      }
+    }
+);
+EOM
+"autocmd DOMLoad .* :SearchMysqlTest
+
+"==============================================================================
+" color scheme
+"==============================================================================
+" ヒントのスタイル指定
+hi Hint                 color:#7CFC00;          background:Black;       font-size:12px;         font-family: Consolas, Osaka, monospace, monospace;       border-color:ButtonShadow; border-width:0px; border-style:solid; padding:0px 1px 0px 1px; position:absolute;z-index:5000;
+hi HintElem                                     background:#AAAAFF;
+hi HintActive                                   background:#f6a2de;
+
+" ヴィジュアルベルをオフ
+set visualbell
+hi Bell display:none;
+
+" バッファの基本的なカラースキーム
+hi StatusLine           color: #333333;                                 font-size: 10pt;        font-family: Consolas, Osaka, monospace, monospace;
+hi Normal               color: SkyBlue;         background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;       opacity: 0.95;
+hi InfoMsg              color: Pink;            background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi ModeMsg              color: SkyBlue;         background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi MoreMsg              color: SkyBlue;         background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi ErrorMsg             color: white;           background: #ec6aa1;
+hi LineNr               color: DodgerBlue;      background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi Question             color: LightYellow;     background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi WarningMsg           color: DeepPink;        background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi Keyword              color: CornflowerBlue;                          font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi Tag                  color: CornflowerBlue;                          font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi NonText                                      background: #333;
+hi Null                 color: SkyBlue;
+hi Filter               color: #aacf53;         font-weight: bold;
+
+" バッファの詳細なカラースキーム
+hi Title                color: SkyBlue;
+hi Indicator            color: DodgerBlue;
+hi String               color: DeepPink;
+hi Number               color: DeepPink;
+hi Object               color: Khaki;
+hi Function             color: DeepSkyBlue;
+hi URL                  color: Pink;
+hi TabNumber            color: White;           font-weight: bold;      font-size: 10pt;        font-family: Consolas, Osaka, monospace, monospace;
+
+" 補完のカラースキーム
+hi CompTitle>*          padding: 0 .5ex;        color: White;
+hi CompTitle                                    color: DodgerBlue;      background: Black;      font-weight: bold;      font-family: Consolas, Osaka, monospace, monospace;
+hi CompDesc                                                                                     font-family: Consolas, Osaka, monospace, monospace;
+hi CompItem                                     color: SkyBlue;                                 font-family: Consolas, Osaka, monospace, monospace;
+hi CompItem[selected]                           color: #aacf53;         background: #555;       font-weight: bold;      font-family: Consolas, Osaka, monospace, monospace;
+hi CompMsg                                      color: Yellow;
+hi CompGroup                                    color: Green;
+
+style -name tab chrome://* <<EOM
+#liberator-statusline {
+    font-family: Consolas, Osaka, monospace !important;
+    font-weight: normal !important;
+    font-size: 10pt !important;
+    padding:3px 0 !important;
+}
+.tabbrowser-tab {
+    font-size: 12px;
+    font-weight: normal;
+    text-align: left !important;
+}
+#status-bar statusbarpanel {
+    padding: 0 1px !important;
+}
+statusbarpanel > * {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+EOM

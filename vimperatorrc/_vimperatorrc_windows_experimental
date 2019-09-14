@@ -1,0 +1,800 @@
+"Updated: 2016/03/21 02:32:00
+"Firefox: 44.0.2
+"OS:      Windows7
+
+"==============================================================================
+" 基本操作
+"==============================================================================
+"j,kによる上下スクロール
+noremap j 10<C-e>
+noremap k 10<C-y>
+"h,lによる前後ページ読み込み
+nnoremap h <A-Left>
+nnoremap l <A-Right>
+"←→によるタブ移動
+nnoremap <Left>  gT
+nnoremap <Right> gt
+"Shift + ← → で現在のタブの位置変更
+nnoremap <S-Right> :tabmove! +1<CR>
+nnoremap <S-Left>  :tabmove! -1<CR>
+"H,Lによる左右スクロール
+nnoremap H 5h
+nnoremap L 5l
+"全選択
+inoremap <C-A> <S-Esc><C-a><S-Esc>
+
+"==============================================================================
+" はてブ
+"==============================================================================
+javascript <<EOF
+liberator.globalVariables.hBookmark_shortcuts = {
+    hintsAdd     : '<C-c>',
+    hintsComment : '<C-C>',
+    add          : ['<C-c>'],
+    comment      : ['<C-C>'],
+};
+EOF
+"bをはてブ検索、Bを新しいタブではてブ検索
+map b :hb<Space>
+map B :hbtab<Space>
+"はてブアドオンをつかってはてブに追加
+javascript if (typeof hBookmark != 'undefined') liberator.loadScript('chrome://hatenabookmark/content/vimperator/plugin/hatenabookmark.js', {__proto__: this});
+
+"==============================================================================
+" :open :tabopenのときの補完
+"==============================================================================
+":[tab]open時の補完設定(s=検索エンジン+キーワードURL,S=サジェストエンジン,l=ロケーションバーの補完機能を利用,b=ブックマーク)
+set complete=bl
+"標準の検索エンジンをGoogle日本語検索に
+set defsearch=google
+"vimperatorのコマンドライン時はimeをOFFにする
+style! -name=commandline-ime chrome://* #liberator-commandline-command input {ime-mode: inactive;}
+"http://d.hatena.ne.jp/blooo/20100416/1271419000 より
+"Google検索はs
+nnoremap s :set<Space>cpt=s<CR>:tabopen<Space>google<Space>
+"その他の検索エンジンでの検索はS
+nnoremap S :set<Space>cpt=s<CR>:tabopen<Space>
+"それ以外の用途でtabopenする場合
+nnoremap t :set<Space>cpt=thlS<CR>:tabopen<Space>
+"ついでにopenも
+nnoremap o :set<Space>cpt=thlS<CR>:open<Space>
+
+"==============================================================================
+" twittperator
+"==============================================================================
+" twittperator.js
+nmap ,tt :<C-u>tw<Space>
+nmap ,tf :<C-u>tw!<CR>
+nmap ,tu :<C-u>tw!@<CR>
+nmap ,tw :<C-u>twuri<CR><Right>
+js <<EOM
+commands.addUserCommand(
+    ["twuri"],
+    "Twittperator tweet with URI",
+    function(){
+        let uri = 'https://www.googleapis.com/urlshortener/v1/url';
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", uri, false);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.send(JSON.stringify({ longUrl: buffer.URI }));
+        let result = JSON.parse(xhr.responseText).id;
+        commandline.open(":",["tw ","/",buffer.title,result].join(" "),modes.EX);
+    }
+);
+EOM
+
+"==============================================================================
+" 各種マッピング
+"==============================================================================
+"Ctrl+rでvimperatorrcのリロード
+map <C-r> :source<Space>~/_vimperatorrc<Return>
+"Ctrl+tでtabgroups switchができるように
+map <C-t> :tabgroups<Space>switch<Space>
+
+"======================================================
+"redmine検索
+"======================================================
+js <<EOM
+commands.addUserCommand(
+        ["SearchRedmineBizAntenna"],
+        "Search redmine contents about BizAntenna",
+        function(args){
+                let uri = 'http://10.0.3.84/projects/bizantenna/search?utf8=✓&scope=&all_words=&all_words=1&titles_only=&q='
+                liberator.open(uri + args, liberator.NEW_TAB);
+        }
+);
+EOM
+nnoremap R :SearchRedmineBizAntenna<Space>
+
+"======================================================
+"WebSVN検索
+"======================================================
+js <<EOM
+commands.addUserCommand(
+        ["SearchWebSVNBizAntenna"],
+        "Search websvn contents about BizAntenna",
+        function(args){
+        		let searchWord = args + "";
+                let uri = 'http://bs64svn/websvn/log.php?repname=BizAntenna&path=&er=1&isdir=1&all=1&max=1000'
+                liberator.open(uri, liberator.NEW_TAB);
+                finder.clear();
+                finder._lastSearchString = searchWord;
+                finder.find(searchWord);
+                finder.highlight(searchWord);
+        }
+);
+EOM
+
+"======================================================
+"BizAntenna検索
+"======================================================
+js <<EOM
+commands.addUserCommand(
+        ["SearchBizAntenna"],
+        "Search BizAntenna contents",
+        function(args){
+                let uri = 'https://accela.ba.accelatech.com/search/8?utf8=✓&authenticity_token=qCjmIPcBWFKI+YtMcmn+SN2KYDRcr03qvlwWaT7Vixs=&op=&&commit=+検+索+&t_rd=1&c_chk1=0&c_chk1=1&c_chk2=0&c_chk3=0&c_chk4=0&term_from=&term_to=&in_tag=&or_tag=&not_tag=&sort=2&c_chk_p=0&c_chk_p=1&c_chk_c=0&facet=&is_search_view=1&content=&q='
+                liberator.open(uri + args, liberator.NEW_TAB);
+        }
+);
+EOM
+nnoremap B :SearchBizAntenna<Space>
+
+"======================================================
+"BizAntennaマニュアル検索
+"======================================================
+js <<EOM
+commands.addUserCommand(
+        ["SearchBizAntennaManual"],
+        "Search BizAntenna Manual",
+        function(args){
+                let uri = 'http://accela.ba.accelatech.com/search?c_chk1=1&c_chk2=0&c_chk3=0&c_chk_c=1&c_chk_p=0&content=62093&not_tag=%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%82%BF%E3%82%B0%2F%E3%82%BF%E3%82%B0%E5%B1%9E%E6%80%A7&q=&sort=1&t_rd=1&q='
+                liberator.open(uri + args, liberator.NEW_TAB);
+        }
+);
+EOM
+nnoremap M :SearchBizAntennaManual<Space>
+
+"======================================================
+"BizSearch R4 SVN ドキュメント検索
+"======================================================
+js <<EOM
+commands.addUserCommand(
+        ["SearchBizSearchR4SVNDocuments"],
+        "Search development contents of BizAntenna at SVN with BizSearch R4",
+        function(args){
+                let uri = 'http://bizsearch/bizsearch-gui/search?corpId=default&p=1&ds=0&facet3=%E6%96%87%E6%9B%B8%E7%A8%AE%E5%88%A5%3A9%3Ad%3Af+%E4%BD%9C%E6%88%90%E8%80%85%3A6%3Ac%3Af+%E6%9B%B4%E6%96%B0%E5%B9%B4%3A6%3Ad%3Af+%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%82%B5%E3%82%A4%E3%82%BA%3A-1%3Ad%3Af+Pine%E3%83%88%E3%83%83%E3%83%97%3A-1%3Al%3Af%3A%E6%8A%80%E8%A1%93%E6%9C%AC%E9%83%A8+Pine%E7%AC%AC2%E9%9A%8E%E5%B1%A4%3A-1%3Al%3Af%3ABizAntenna%E9%96%8B%E7%99%BA%E8%B3%87%E6%96%99+Pine%E7%AC%AC3%E9%9A%8E%E5%B1%A4%3A-1%3Al%3Af&q_title=&q_title_p=1&q_body=&q_body_p=1&n1_1l=&n1_1h=&q_url=&q_url_p=1&n1_2l=&n1_2h=&q_doctype=&q_doctype_p=1&q_author=&q_author_p=1&hits=10&t[]=3&q='
+                liberator.open(uri + args, liberator.NEW_TAB);
+        }
+);
+EOM
+nnoremap S :SearchBizSearchR4SVNDocuments<Space>
+
+"======================================================
+"evernote検索
+"======================================================
+js <<EOM
+commands.addUserCommand(
+        ["SearchEvernote"],
+        "Search evernote contents",
+        function(args){
+                let uri = 'https://www.evernote.com/Home.action?hash=#v=l&b=0&x='
+                liberator.open(uri + args, liberator.NEW_TAB);
+        }
+);
+EOM
+nnoremap e :SearchEvernote<Space>
+
+"=======================================================
+" カスタム検索
+"=======================================================
+js << EOM
+/**
+ *
+subcommandsにサブコマンド名(subcommand)、説明(description)、検索対象のURL(target_uri)を設定ください。
+ * ただし、検索対象のURLについては、URLの最後に検索パラメータ（&q=や&s=）が来るようにしてください。
+ * また、command.addUserCommandの中身については編集する必要はありません。
+ */
+let subcommands = [
+    {
+        subcommand: "ba",
+        description: "BizAntenna @ accela.ba.accelatech.com",
+        target_uri: "
+https://accela.ba.accelatech.com/search/1?c_chk1=0&c_chk1=1&c_chk2=0&c_chk3=0&c_chk4=0&c_chk_c=0&c_chk_p=0&c_chk_p=1&c_synonym=0&c_tag_matching=0&commit=%20%E3%83%93%E3%83%A5%E3%83%BC%E5%86%85%E3%82%92%E6%A4%9C%E7%B4%A2%20&content=&facet=ft_1%3A-1%3Ac%3Af%20ft_10%3A-1%3Ac%3Af%20ft_91%3A-1%3Ac%3Af%20ft_92%3A-1%3Ac%3Af%3A%E3%83%95%E3%82%A9%E3%83%BC%E3%83%9E%E3%83%83%E3%83%88%E7%A8%AE%E5%88%A5%2F%E3%82%B3%E3%83%B3%E3%83%86%E3%83%B3%E3%83%84%20ft_93%3A-1%3Ac%3Af%20ft_2%3A-1%3Ac%3Af%20ft_3%3A-1%3Ac%3Af%20ft_32%3A-1%3Ac%3Af%20ft_22%3A-1%3Ac%3Af%20ft_24%3A-1%3Ac%3Af%20ft_33%3A-1%3Ac%3Af%20ft_23%3A-1%3Ac%3Af%20ft_31%3A-1%3Ac%3Af%20ft_34%3A-1%3Ac%3Af%20ft_25%3A-1%3Ac%3Af%20ft_26%3A-1%3Ac%3Af%20ft_27%3A-1%3Ac%3Af%20ft_28%3A-1%3Ac%3Af%20ft_11%3A-1%3Al%3Af%20ft_29%3A-1%3Ac%3Af%20ft_30%3A-1%3Ac%3Af%20ft_12%3A-1%3Ac%3Af%20ft_13%3A-1%3Ac%3Af%20ft_15%3A-1%3Ac%3Af%20ft_16%3A-1%3Ac%3Af%20ft_17%3A-1%3Ac%3Af%20ft_18%3A-1%3Ac%3Af%20ft_21%3A-1%3Ac%3Af%20ft_35%3A-1%3Ac%3Af%20ft_36%3A-1%3Ac%3Af%20ft_37%3A-1%3Ac%3Af%20ft_38%3A-1%3Ac%3Af%20ft_39%3A-1%3Ac%3Af%20ft_40%3A-1%3Ac%3Af%20ft_41%3A-1%3Ac%3Af%20ft_42%3A-1%3Ac%3Af%20ft_45%3A-1%3Ac%3Af%20ft_43%3A-1%3Ad%3Af%20ft_44%3A-1%3Ad%3Af%20ft_46%3A-1%3Ad%3Af%20ft_47%3A-1%3Ac%3Af%20ft_48%3A-1%3Ac%3Af%20ft_49%3A-1%3Ac%3Af%20ft_50%3A-1%3Ac%3Af%20ft_51%3A-1%3Al%3Af%20ft_52%3A-1%3Ad%3Af%20ft_53%3A-1%3Ad%3Af%20ft_54%3A-1%3Ad%3Af%20ft_55%3A-1%3Ad%3Af%20ft_56%3A-1%3Ac%3Af%20ft_57%3A-1%3Ac%3Af%20ft_58%3A-1%3Ac%3Af%20ft_59%3A-1%3Ac%3Af%20ft_60%3A-1%3Ac%3Af%20ft_61%3A-1%3Ad%3Af%20ft_62%3A-1%3Ad%3Af%20ft_63%3A-1%3Ac%3Af%20ft_64%3A-1%3Ad%3Af%20ft_65%3A-1%3Ac%3Af%20ft_66%3A-1%3Ac%3Af%20ft_67%3A-1%3Ac%3Af%20ft_68%3A-1%3Ac%3Af%20ft_69%3A-1%3Ac%3Af%20ft_70%3A-1%3Ac%3Af%20ft_71%3A-1%3Ac%3Af%20ft_72%3A-1%3Ac%3Af%20ft_73%3A-1%3Ac%3Af%20ft_80%3A-1%3Ad%3Af%20ft_83%3A-1%3Ad%3Af%20ft_84%3A-1%3Ac%3Af%20ft_85%3A-1%3Ac%3Af%20ft_86%3A-1%3Ac%3Af%20ft_87%3A-1%3Ac%3Af%20ft_88%3A-1%3Ac%3Af%20ft_89%3A-1%3Ac%3Af%20ft_90%3A-1%3Ac%3Af%20ft_94%3A-1%3Ac%3Af%20ft_97%3A-1%3Al%3Af%20ft_98%3A-1%3Ac%3Af%20f_c%3A-1%3Al%3Af&in_tag=&is_search_view=0&not_tag=%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0%E3%82%BF%E3%82%B0%2F%E3%82%BF%E3%82%B0%E5%B1%9E%E6%80%A7&op=%26&or_tag=&sort=1&t_rd=1&term_from=&term_to=&utf8=%E2%9C%93&q="
+
+    }, {
+        subcommand: "gitweb",
+        description: "GitWeb @ kensho.ddo.jp",
+        target_uri: "
+https://kensho.ddo.jp/gitweb/?p=script.git&a=search&h=HEAD&st=commit&s="
+    }, {
+        subcommand: "github",
+        description: "GitHub @ github.com",
+        target_uri: "https://github.com/search?utf8=%E2%9C%93&q="
+    }, {
+        subcommand: "openhub",
+        description: "open source code search @ code.openhub.net",
+        target_uri: "http://code.openhub.net/search?s="
+    }, {
+        subcommand: "scholar",
+        description: "google scholar search @ scholar.google.co.jp",
+        target_uri: "http://scholar.google.co.jp/scholar?q="
+	}, {
+		subcommand: "r4",
+		description: "BizSearch R4",
+		target_uri: 'http://bizsearch/bizsearch-gui/search?corpId=default&p=1&ds=0&facet3=%E6%96%87%E6%9B%B8%E7%A8%AE%E5%88%A5%3A9%3Ad%3Af+%E4%BD%9C%E6%88%90%E8%80%85%3A6%3Ac%3Af+%E6%9B%B4%E6%96%B0%E5%B9%B4%3A6%3Ad%3Af+%E3%83%95%E3%82%A1%E3%82%A4%E3%83%AB%E3%82%B5%E3%82%A4%E3%82%BA%3A-1%3Ad%3Af+Pine%E3%83%88%E3%83%83%E3%83%97%3A-1%3Al%3Af%3A%E6%8A%80%E8%A1%93%E6%9C%AC%E9%83%A8+Pine%E7%AC%AC2%E9%9A%8E%E5%B1%A4%3A-1%3Al%3Af%3ABizAntenna%E9%96%8B%E7%99%BA%E8%B3%87%E6%96%99+Pine%E7%AC%AC3%E9%9A%8E%E5%B1%A4%3A-1%3Al%3Af&q_title=&q_title_p=1&q_body=&q_body_p=1&n1_1l=&n1_1h=&q_url=&q_url_p=1&n1_2l=&n1_2h=&q_doctype=&q_doctype_p=1&q_author=&q_author_p=1&hits=10&t[]=3&q='
+];
+commands.addUserCommand(
+    ["CustomSearch"],
+    "Custom Search:",
+    function(args) {
+        let uri = "";
+        let input_subcommand = args[0];
+        for(let i=0; i<subcommands.length; i++) {
+            if (input_subcommand == subcommands[i].subcommand) {
+                uri = subcommands[i].target_uri;
+            }
+        }
+        if (uri == "") {
+            liberator.echoerr("input sub-command is not existing.");
+            return;
+        }
+        keywords = args.slice(1);
+        liberator.open(uri + keywords.join(" "), liberator.NEW_TAB);
+    }, {
+        completer: function(context, args) {
+            context.title = ["Sub-Command", "Description"];
+            context.compare = CompletionContext.Sort.number;
+            context.regenerate = false;
+            context.anchored = true;
+            context.ignoreCase = true;
+            context.filterFunc = null;
+            context.generate = function () {
+                return subcommands.map(function(e) {
+                    return [e.subcommand, e.description]});
+            }
+        }
+    }
+);
+EOM
+nnoremap S :CustomSearch<Space>
+
+"======================================================
+"sqlite検索
+"======================================================
+js <<EOM
+commands.addUserCommand(
+        ["SearchSqlite3Test"],
+        "Search about SQLite3",
+        function(args){
+                let uri = 'https://www.evernote.com/Home.action?hash=#v=l&b=0&x='
+                liberator.open(uri + args, liberator.NEW_TAB);
+        }, {
+                completer: function(context, args) {
+                        context.title = ["title", "url"];
+                        context.generate = function() {
+                                //定数
+                                let limit = 10;
+                                let maxLimit = 100;
+                                let fetchItem = 100;
+
+                                //ローカル定数・変数
+                                var file = FileUtils.getFile("ProfD", ["places.sqlite"]);
+                                const db = Services.storage.openDatabase(file);
+
+                                //データ取得関数
+                                var histories = [];
+                                var statement = db.createStatement("SELECT p.title, p.url, h.visit_date/1000 FROM moz_places p, moz_historyvisits h WHERE h.place_id = p.id ORDER BY h.visit_date DESC LIMIT ?1;");
+                                try{
+                                        statement.bindInt64Parameter(0, fetchItem);
+                                        while (statement.executeStep()){
+                                                var historyItem = [
+                                                        statement.getString(0),
+                                                        statement.getString(1)//,
+                                                        //statement.getInt64(2)
+                                                ];
+                                                if (historyItem[0] && historyItem[1]) {
+                                                        histories.push(historyItem);
+                                                }
+                                        }
+                                }
+                                finally{
+                                        statement.reset();
+                                }
+                                return histories;
+                        };
+                }
+        }
+);
+EOM
+
+"======================================================
+"全タブ検索
+"======================================================
+js <<EOM
+let searchAllTabsSub = {
+	templateTitle: function (item, text) {
+		var simpleURL = item.url.replace(/^https?:\/\//, '');
+		if (simpleURL.indexOf('/') == simpleURL.length-1)
+			simpleURL = simpleURL.replace('/', '');
+		return xml`<span class="td-strut"/>${
+				item.index + ":" + (item.matchCount+1) + ": " + 
+				(item.title=="" ? "未データ取得" : item.title)
+			}<span></span>
+			<a highlight="simpleURL">
+				<span class="extra-info">${simpleURL}</span>
+			</a>`;
+	},	
+	templateDescription: function (item, text) {
+		if (!item.summary) {
+			return;
+		}
+		return !(item.summary && item.summary.length) ? 
+			"" :
+			xml`<span highlight="InfoMsg">${item.summary.slice(0, item.offset)}</span>
+				<span highlight="Filter">${item.filter}</span>
+				<span highlight="InfoMsg">${item.summary.slice(
+					item.offset + item.filter.length, 
+					item.summary.length)
+				}</span>`;
+	},
+	unescapeHTML: function(str) {
+		let entity = {
+			"&amp;":	"&",
+			"&nbsp;":	" ",
+			"&lt;":		"<",
+			"&gt;":		">",
+			"&quot;":	'"',
+			"&#39;":	"'",
+			"&#13;":	"\r",
+			"&#10;":	"\n"
+		};
+		return str.replace(/\&.{1,4}\;/g,
+			function(e) {
+				return entity[e] ? entity[e] : e;
+			}
+		);
+	}
+}
+
+/* ブラウザの全タブについて内容検索 */
+commands.addUserCommand(
+	["SearchAllTabContent"],
+	"Search about content of all tabs",
+	function(args){
+		let searchWord, tabIndex, matchCount, url;
+		try {
+			let text = (args+"").match(/^([^\:]+)\:([^\:]+)\:(\d+)\:(\d+)\:(.*$)/);
+			searchWords = text[1].split(" ");
+			searchWord = text[2];
+			tabIndex = ~~text[3];
+			matchCount = text[4];
+			url = text[5];
+		} finally {
+			gBrowser.selectedTab = gBrowser.tabContainer.childNodes[tabIndex];
+			let highlightAndFind = function() {
+				finder.clear();
+				finder._lastSearchString = searchWord;
+				finder.find(searchWord);
+				finder.highlight(searchWord);
+			}
+			if(gBrowser.browsers[tabIndex].contentDocument.body.innerHTML == "") {
+			let preBody = "";
+			let intervalCount = 0;
+			let interval = window.setInterval(function() {
+				let body = "";
+				try {
+					body = gBrowser.browsers[tabIndex].contentDocument.body.innerHTML;
+				} finally {
+					if(body!="" && body==preBody || intervalCount++ > 30/*second*/) {
+						clearInterval(interval);
+						highlightAndFind();
+					}
+					preBody = body;
+				}
+			}, 1000);
+			} else {
+				highlightAndFind();
+			}
+		}
+	}, {
+		completer: function(context, args) {
+			context.title = ["Title", "Matching"];
+			context.keys = {
+				text: "commandline", 
+				description: "summary", 
+				title: "title", 
+				index: "index", 
+				url: "url", 
+				summary: "summary",
+				filter: "filter",
+				offset: "offset",
+				matchCount: "matchCount",
+				commandline: "commandline"
+			};
+			context.process = [
+				searchAllTabsSub.templateTitle,
+				searchAllTabsSub.templateDescription
+			];
+			context.compare = CompletionContext.Sort.number;
+			context.regenerate = true;
+			context.anchored = true;
+			context.ignoreCase = true;
+			context.filterFunc = null;
+			context.generate = function () {
+				const summaryLenMax = 200;
+				const prefixLen = 50;
+				const matchCountMax = 100;
+
+				let completions = [];
+				let filters = context.filters = args.map(function(e){
+					return e.replace(
+						/\*|\.|\(|\)|\\|\+|\?|\{|\}|\[|\]|\^|\$|\-|\||\//g,
+						function(e){ return '\\' + e });
+				});
+				let title, url, innerHtmlMsg;
+				title = url = innerHtmlMsg = "";
+				
+				//補完リストの生成
+				let makeCompletions = function(searchTarget, index) {
+					let startIndex = 0;
+					let matchCount = 0;
+					let regex = RegExp(filters.join("|"), "ig");
+					let matchedList = []; 
+					searchTarget.replace(regex, function(e) {
+						matchedList.push(e);
+					});	
+
+					while(matchCount < matchCountMax && matchCount < matchedList.length) {
+						let filter = matchedList[matchCount];
+						let offset = searchTarget.indexOf(filter, startIndex);
+						startIndex = offset + filter.length;
+						if (offset == -1) break;
+						let summary = searchTarget.slice(
+								offset > prefixLen ?  offset - prefixLen : 0,
+								offset + summaryLenMax);
+						let commandline = 
+							filters[filters.length-1] + ":" 
+							+ filter + ":" 
+							+ index + ":" 
+							+ (matchCount+1) + ":" 
+							+ url;
+						completions.unshift(
+							{ index: index,
+								matchCount: matchCount,
+								title: title,
+								url: url,
+								summary: summary,
+								filter: filter,
+								offset:	offset > prefixLen ? prefixLen : offset,
+								commandline: commandline
+							}
+						);
+						if (filter == "") break;
+						if (url.match("google.co.jp")) break;
+						matchCount += 1;
+					}
+				};
+
+				//各タブにおけるデータ取得
+				for(let i=0; i<gBrowser.tabs.length; i++) {
+					try {
+						title = tabs.getTab(i).label;
+						let targetWindow = gBrowser.browsers[i].contentDocument;
+						url = targetWindow.location.href;
+						innerHtmlMsg = targetWindow.body.innerHTML
+							.replace(/\<[^\>]*?\>/g, "").replace(/(\ |\n|\r)/g, "");
+						innerHtmlMsg = searchAllTabsSub.unescapeHTML(innerHtmlMsg);
+					} finally {
+						let searchTarget = title + innerHtmlMsg + url;
+						if (searchTarget == "") continue;
+						
+						//各単語について検索
+						let isMatched = filters.map(function(filter) {
+							let regex = new RegExp(filter, "i");
+							return searchTarget.match(regex) ? true : false;
+						}).reduce(function(s,e) {
+							return s && e;
+						});
+						if (isMatched) {
+								makeCompletions(searchTarget, i);
+						}
+					}
+				}
+				return completions;
+			}
+		}
+	}
+);
+EOM
+nnoremap O :SearchAllTabContent<Space>
+
+"======================================================
+"mysql検索
+"======================================================
+js <<EOM
+/* sqliteの内容ついて検索 */
+commands.addUserCommand(
+        ["SearchMysqlTest"],
+        "Search about mysql",
+        function(args){
+        }, {
+                completer: function(context, args) {
+                        context.title = ["Title", "Matching"];
+                        context.compare = CompletionContext.Sort.number;
+                        context.regenerate = true;
+                        context.anchored = true;
+                        context.ignoreCase = true;
+                        context.filterFunc = null;
+                        context.generate = function () {
+                                // create an nsIFile for the executable
+                                var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsIFile);
+                                file.initWithPath("/usr/local/bin/mysql");
+
+                                // create an nsIProcess
+                                var process = Components.classes["@mozilla.org/process/util;1"].createInstance(Components.interfaces.nsIProcess);
+                                process.init(file);
+
+                                // Run the process.
+                                // If first param is true, calling thread will be blocked until
+                                // called process terminates.
+                                // Second and third params are used to pass command-line arguments
+                                // to the process.
+                                var args = ["--help"];
+                                process.run(false, args, args.length);
+                                let hoge = liberator.execute('!/usr/local/bin/mysql -uhatena -phatena -Dhatena_bookmark -e "select title from url limit 20;" --default-character-set=utf8 -A -s');
+                        }
+                }
+        }
+);
+EOM
+
+"=======================================================
+" twittperatorで短縮URLを自働的に入力するように
+"=======================================================
+""" twittperator.js
+nmap ,tt :<C-u>tw<Space>
+nmap ,tf :<C-u>tw!<CR>
+nmap ,tu :<C-u>tw!@<CR>
+nmap ,tw :<C-u>twuri<CR><Right>
+
+js <<EOM
+commands.addUserCommand(
+    ["twuri"],
+    "Twittperator tweet with URI",
+    function(){
+        let uri = 'https://www.googleapis.com/urlshortener/v1/url';
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", uri, false);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.send(JSON.stringify({ longUrl: buffer.URI }));
+        let result = JSON.parse(xhr.responseText).id;
+        commandline.open(":",["tw ","/",buffer.title,result].join(" "),modes.EX);
+    }
+);
+EOM
+	
+"=======================================================
+" BizAntennaコンテンツ参照画面UI変更
+"=======================================================
+js << EOM
+commands.addUserCommand(
+    ["baModView"],
+    "Get Tags At BizAntenna",
+    function(args) {
+        // 広げ幅
+        const extend_width = 200;
+
+        // キャッシュ
+        let d = window.content.window.document;
+
+        // richtextの本文の横幅をantenna-formいっぱいに広げる
+        let rich_nodes = d.evaluate("//div[@class='layout_rich_textarea_block']", d, null, 7, null);
+        for(let i=0; i<rich_nodes.snapshotLength; i++) {
+            rich_nodes.snapshotItem(i).parentNode.
+                setAttribute("style", "margin:25px 0px 10px 0px");
+            rich_nodes.snapshotItem(i).parentNode.parentNode.childNodes[1].
+                setAttribute("style","width:100%")
+        }
+  
+        // textareaの本文の横幅をantenna-formいっぱいに広げる
+        let textarea_nodes = d.evaluate("//div[@class='layout_textarea_block']", d, null, 7, null);
+        for(let i=0; i<textarea_nodes.snapshotLength; i++) {
+            textarea_nodes.snapshotItem(i).parentNode.
+                setAttribute("style", "margin:25px 0px 10px 0px");
+            textarea_nodes.snapshotItem(i).parentNode.parentNode.childNodes[1].
+                setAttribute("style","width:100%")
+        }
+  
+        // antenna-formの横幅をextend_widthだけ広げる
+        let ba_form_node = d.evaluate("//div[@class='antenna-form']", d, null, 7, null);
+        if (ba_form_node) {
+            ba_form_node.snapshotItem(0).setAttribute("style", "width:" + (748 + extend_width) + "px");
+        }
+
+        // headerの横幅をextend_widthだけ広げる
+        d.getElementById("container").setAttribute("style", "width:" + (980 + extend_width) + "px");
+    }
+);
+EOM
+":autocmd DOMLoad "^https?://accela\.ba\.accelatech\.com/content" :baModView
+
+"=======================================================
+"BizAntennaタグ検索
+"=======================================================
+js << EOM
+commands.addUserCommand(
+    ["baTagSuggest"],
+    "Get Tags At BizAntenna",
+    function(args) {
+        //キャッシュ
+        let d = window.content.window.document;
+
+        //全タグの取得
+        let tag_list = [];
+        let tag_name_nodes = d.evaluate(
+            "//*[@class='tag_name']", d, null, 7, null);
+        let nof_tags = tag_name_nodes.snapshotLength;
+       
+        //各タグについてタググループ名の取得
+        for(let i=0; i<nof_tags; i++) {
+              let tag_name_node = tag_name_nodes.snapshotItem(i);
+              let tag_name = tag_name_node.textContent.replace(/^\s+|\s+$|\s+\(\d+\)/g,"");
+              let tag_group_name_node = d.evaluate(
+                ".//*[@class='tags_name']",
+                tag_name_node.parentNode.parentNode.parentNode.parentNode.parentNode,
+                null, 7, null);
+              let tag_group_name = tag_group_name_node.snapshotItem(0).
+            textContent.replace(/^\s+|\s+$|\s+\(\d+\)/g,"");
+            tag_group_name = (tag_group_name == "投稿先グループ指定") ? "公開グループ" :
+                (tag_group_name == "コンテンツ") ? "フォーマット" : tag_group_name;
+            if(tag_group_name == "日付") continue;
+              tag_list.push(tag_group_name + "/" + tag_name);
+        }
+       
+        //タグ条件の「いずれかを含む」のテキストボックスにサジェスト登録
+        let tag_search_dom = d.evaluate(
+            "//input[@id='or_tag']",
+            d, null, 7, null).snapshotItem(0);
+        tag_search_dom.setAttribute("autocomplete", "on");
+        tag_search_dom.setAttribute("list", "tag_list");
+        let not_tag_search_dom = d.evaluate(
+            "//input[@id='not_tag']",
+            d, null, 7, null).snapshotItem(0);
+        not_tag_search_dom.setAttribute("autocomplete", "on");
+        not_tag_search_dom.setAttribute("list", "tag_list");
+       
+        //サジェストの辞書を生成
+        let tag_list_elm = d.createElement("datalist");
+        tag_list_elm.id = "tag_list";
+        let datalist_str = "";
+        for(let i=0; i<tag_list.length; i++) {
+            datalist_str += "<option value='\"" + tag_list[i] + "\"'>";
+        }
+        tag_list_elm.innerHTML = datalist_str;
+        tag_search_dom.parentNode.appendChild(tag_list_elm);
+      }
+);
+EOM
+:autocmd DOMLoad "^https?://accela\\.ba\\.accelatech\\.com/(?!content)" :baTagSuggest
+
+"=======================================================
+"BizAntennaサムネイルプレビュー改修
+"=======================================================
+js << EOM
+commands.addUserCommand(
+    ["baThumbnailMod"],
+    "Modify Thumbnail Preview At BizAntenna",
+    function(args) {
+        // 広げ幅
+        const extend_width = 200;
+
+        // キャッシュ
+        let d = window.content.window.document;
+
+				let e = document.evaluate("//*[@id='preview']", document, null, 7, null).snapshotItem(0).style;
+				e.maxHeight = "100%";
+				e.height = "100%";
+				e.top = "0%";
+
+        // richtextの本文の横幅をantenna-formいっぱいに広げる
+        let rich_nodes = d.evaluate("//div[@class='layout_rich_textarea_block']", d, null, 7, null);
+        for(let i=0; i<rich_nodes.snapshotLength; i++) {
+            rich_nodes.snapshotItem(i).parentNode.
+                setAttribute("style", "margin:25px 0px 10px 0px");
+            rich_nodes.snapshotItem(i).parentNode.parentNode.childNodes[1].
+                setAttribute("style","width:100%")
+        }
+  
+        // textareaの本文の横幅をantenna-formいっぱいに広げる
+        let textarea_nodes = d.evaluate("//div[@class='layout_textarea_block']", d, null, 7, null);
+        for(let i=0; i<textarea_nodes.snapshotLength; i++) {
+            textarea_nodes.snapshotItem(i).parentNode.
+                setAttribute("style", "margin:25px 0px 10px 0px");
+            textarea_nodes.snapshotItem(i).parentNode.parentNode.childNodes[1].
+                setAttribute("style","width:100%")
+        }
+  
+        // antenna-formの横幅をextend_widthだけ広げる
+        let ba_form_node = d.evaluate("//div[@class='antenna-form']", d, null, 7, null);
+        if (ba_form_node) {
+            ba_form_node.snapshotItem(0).setAttribute("style", "width:" + (748 + extend_width) + "px");
+        }
+
+        // headerの横幅をextend_widthだけ広げる
+        d.getElementById("container").setAttribute("style", "width:" + (980 + extend_width) + "px");
+      }
+);
+EOM
+:autocmd DOMLoad "^https?://accela\\.ba\\.accelatech\\.com/(?!content)" :baTagSuggest
+
+"==============================================================================
+" color scheme
+"==============================================================================
+" gui設定
+set toolbars=tabs
+
+" ヒントのスタイル指定
+hi Hint                 color:#7CFC00;          background:Black;       font-size:12px;         font-family: Consolas, Osaka, monospace, monospace;       border-color:ButtonShadow; border-width:0px; border-style:solid; padding:0px 1px 0px 1px; position:absolute;z-index:5000;
+hi HintElem                                     background:#AAAAFF;
+hi HintActive                                   background:#f6a2de;
+
+" ヴィジュアルベルをオフ
+set visualbell
+hi Bell display:none;
+
+" バッファの基本的なカラースキーム
+hi StatusLine           color: #333333;                                 font-size: 10pt;        font-family: Consolas, Osaka, monospace, monospace;
+hi Normal               color: SkyBlue;         background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;       opacity: 0.95;
+hi InfoMsg              color: Pink;            background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi ModeMsg              color: SkyBlue;         background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi MoreMsg              color: SkyBlue;         background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi ErrorMsg             color: white;           background: #ec6aa1;
+hi LineNr               color: DodgerBlue;      background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi Question             color: LightYellow;     background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi WarningMsg           color: DeepPink;        background: #333;       font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi Keyword              color: CornflowerBlue;                          font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi Tag                  color: CornflowerBlue;                          font-size: 9pt;         font-family: Consolas, Osaka, monospace, monospace;
+hi NonText                                      background: #333;
+hi Null                 color: SkyBlue;
+hi Filter               color: #aacf53;         font-weight: bold;
+
+" バッファの詳細なカラースキーム
+hi Title                color: SkyBlue;
+hi Indicator            color: DodgerBlue;
+hi String               color: DeepPink;
+hi Number               color: DeepPink;
+hi Object               color: Khaki;
+hi Function             color: DeepSkyBlue;
+hi URL                  color: Pink;
+hi TabNumber            color: White;           font-weight: bold;      font-size: 10pt;        font-family: Consolas, Osaka, monospace, monospace;
+
+" 補完のカラースキーム
+hi CompTitle>*          padding: 0 .5ex;        color: White;
+hi CompTitle                                    color: DodgerBlue;      background: Black;      font-weight: bold;      font-family: Consolas, Osaka, monospace, monospace;
+hi CompDesc                                                                                     font-family: Consolas, Osaka, monospace, monospace;
+hi CompItem                                     color: SkyBlue;                                 font-family: Consolas, Osaka, monospace, monospace;
+hi CompItem[selected]                           color: #aacf53;         background: #555;       font-weight: bold;      font-family: Consolas, Osaka, monospace, monospace;
+hi CompMsg                                      color: Yellow;
+hi CompGroup                                    color: Green;
+
+style -name tab chrome://* <<EOM
+#liberator-statusline {
+    font-family: Consolas, Osaka, monospace !important;
+    font-weight: normal !important;
+    font-size: 10pt !important;
+    padding:3px 0 !important;
+}
+.tabbrowser-tab {
+    font-size: 12px;
+    font-weight: normal;
+    text-align: left !important;
+}
+#status-bar statusbarpanel {
+    padding: 0 1px !important;
+}
+statusbarpanel > * {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+EOM

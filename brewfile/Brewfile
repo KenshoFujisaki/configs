@@ -1,0 +1,90 @@
+# tap repositories and their packages
+
+tap homebrew/core
+brew anyenv
+brew bash-completion
+brew coreutils
+brew django-completion
+brew gdbm
+brew gettext
+brew git
+brew gmp
+brew gnutls
+brew htop
+brew icu4c
+brew jq
+brew libevent
+brew libffi
+brew libgcrypt
+brew libgpg-error
+brew libidn2
+brew libtasn1
+brew libunistring
+brew libxml2
+brew libxmlsec1
+brew libyaml
+brew lua
+brew mas
+brew ncurses
+brew nettle
+brew nkf
+brew node
+brew oath-toolkit
+brew oniguruma
+brew openssl
+brew p11-kit
+brew pcre
+brew pcre2
+brew peco
+brew perl
+brew python
+brew q
+brew readline
+brew ruby
+brew ruby-completion
+brew sqlite
+brew terminal-notifier
+brew tmux
+brew trash
+brew tree
+brew unbound
+brew vim
+brew wget
+brew xz
+brew yarn
+brew zsh
+brew zsh-completions
+
+tap homebrew/cask
+cask alfred
+cask fluid
+cask slack
+cask google-japanese-ime
+cask google-chrome
+cask karabiner-elements
+cask skitch
+cask tableau
+cask xmind
+
+tap argon/mas
+
+tap rcmdnk/file
+brew brew-file
+
+# Other pip packages
+pip completion
+
+# Other gem packages
+# gem completion
+
+# Other Cask applications
+cask dash
+cask google-drive-file-stream
+cask iterm2
+cask microsoft-teams
+cask spotify
+cask the-unarchiver
+cask spectacle
+
+# App Store applications
+appstore 1088779979 Mini Calendar (1.5.5)
