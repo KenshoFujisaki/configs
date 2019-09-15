@@ -85,6 +85,8 @@ cask microsoft-teams
 cask spotify
 cask the-unarchiver
 cask spectacle
+cask evernote
+cask dropbox
 
 # App Store applications
 appstore 1088779979 Mini Calendar (1.5.5)
