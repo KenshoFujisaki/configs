@@ -59,7 +59,16 @@ export TERM="xterm-256color"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git ruby gem)
+plugins=(git ruby gem notify)
+
+# notifyのインストール手順
+# ref => https://github.com/marzocchi/zsh-notify#oh-my-zsh
+zstyle ':notify:*' error-icon "https://media3.giphy.com/media/10ECejNtM1GyRy/200_s.gif"
+zstyle ':notify:*' error-title "wow such #fail"
+zstyle ':notify:*' success-icon "https://s-media-cache-ak0.pinimg.com/564x/b5/5a/18/b55a1805f5650495a74202279036ecd2.jpg"
+zstyle ':notify:*' success-title "very #success. wow"
+zstyle ':notify:*' activate-terminal yes
+zstyle ':notify:*' command-complete-timeout 15
 
 # User configuration
 
