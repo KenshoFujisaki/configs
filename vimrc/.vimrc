@@ -225,12 +225,12 @@ augroup END
 
 "----------------------------------------------------
 " vimdiff color
-" https://github.com/yuroyoro/dotfiles/blob/master/.vimrc.colors
+" ref: https://vi.stackexchange.com/questions/10897/how-do-i-customize-vimdiff-colors
 "----------------------------------------------------
-hi Pmenu ctermbg=255 ctermfg=0 guifg=#000000 guibg=#999999
-hi PmenuSel ctermbg=57 ctermfg=255
-hi PmenuSbar ctermbg=0 ctermfg=9
-hi PmenuSbar ctermbg=255 ctermfg=0 guifg=#000000 guibg=#FFFFFF
+hi DiffAdd      ctermfg=NONE          ctermbg=LightGreen
+hi DiffChange   ctermfg=NONE          ctermbg=NONE
+hi DiffDelete   ctermfg=LightBlue     ctermbg=Red
+hi DiffText     ctermfg=Yellow        ctermbg=Red
 
 "----------------------------------------------------
 " neocomplcache
@@ -393,6 +393,7 @@ NeoBundle 'osyo-manga/vim-over'
 
 " undoツリー
 NeoBundle 'sjl/gundo.vim'
+let g:gundo_prefer_python3 = 1
 nmap U :<C-u>GundoToggle<CR>
 
 " 簡易実行
